@@ -177,7 +177,7 @@ spec:
         startingStep: 2
         args:
         - name: service-name
-          value: canary|reviews|bookinfo|cp-cluster-1|-
+          value: canary|reviews|bookinfo|cluster-1|-
       canaryMetadata:
         annotations:
           version: canary
@@ -221,7 +221,7 @@ Please refer [Analysis & Progressive delivery in Argo Rollout](https://argoproj.
 * SkyWalking metrics can be fetched by connecting to `OAP` service graphql endpoint i.e `http://oap.istio-system:12800` installed on TSB ControlPlane Cluster.
 * Success condition is derived using Apdex score. Please read [Apdex score for measuring service mesh health](https://tetrate.io/blog/the-apdex-score-for-measuring-service-mesh-health/) for more details.
 * Subset name of canary deployment needs to be configured as an argument `service-name` in the `analysis` template.
-* Since we are using `reviews` service here, please use `canary|reviews|bookinfo|cp-cluster-1|-` in the format of `subset|service name|namespace name|cluster name|env name` based on SPM noun convention.
+* Since we are using `reviews` service here, please use `canary|reviews|bookinfo|cluster-1|-` in the format of `subset|service name|namespace name|cluster name|env name` based on SPM noun convention.
 
 [analysis.yaml](/argo/rollout/analysis.yaml)
 

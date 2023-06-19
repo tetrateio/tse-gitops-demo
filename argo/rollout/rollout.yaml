@@ -19,7 +19,7 @@ spec:
         startingStep: 2
         args:
         - name: service-name
-          value: canary|reviews|bookinfo|cp-cluster-1|-
+          value: canary|reviews|bookinfo|cluster-1|-
       canaryMetadata:
         annotations:
           version: canary
