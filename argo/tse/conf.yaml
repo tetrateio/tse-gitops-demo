@@ -19,7 +19,7 @@ items:
   spec:
     namespaceSelector:
       names:
-        - "cp-cluster-1/bookinfo"
+        - "cluster-1/bookinfo"
 - apiVersion: gateway.tsb.tetrate.io/v2
   kind: Group
   metadata:
@@ -32,7 +32,7 @@ items:
     displayName: bookinfo-gateway-group
     namespaceSelector:
       names:
-        - "cp-cluster-1/bookinfo"
+        - "cluster-1/bookinfo"
     configMode: DIRECT
 - apiVersion: traffic.tsb.tetrate.io/v2
   kind: Group
@@ -46,7 +46,7 @@ items:
     displayName: bookinfo-traffic-group
     namespaceSelector:
       names:
-        - "cp-cluster-1/bookinfo"
+        - "cluster-1/bookinfo"
     configMode: DIRECT
 - apiVersion: security.tsb.tetrate.io/v2
   kind: Group
@@ -60,7 +60,7 @@ items:
     displayName: bookinfo-security-group
     namespaceSelector:
       names:
-        - "cp-cluster-1/bookinfo"
+        - "cluster-1/bookinfo"
     configMode: DIRECT
 - apiVersion: install.tetrate.io/v1alpha1
   kind: IngressGateway
