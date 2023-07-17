@@ -148,7 +148,7 @@ metadata:
     app: reviews
     version: stable
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: reviews
