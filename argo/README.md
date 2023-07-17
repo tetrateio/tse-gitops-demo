@@ -13,7 +13,7 @@ Create a sample application using the below command. An example repository conta
 You can either use Argo CD CLI or their web UI to import application configurations directly from Git.
 
 ```bash{promptUser: "alice"}
-argocd app create bookinfo-app --repo https://github.com/tetrateio/tsb-gitops-demo.git --path application --dest-server https://kubernetes.default.svc --dest-namespace bookinfo --sync-policy automated --auto-prune
+argocd app create bookinfo-app --repo https://github.com/tetrateio/tsb-gitops-demo.git --path application --dest-server https://kubernetes.default.svc --dest-namespace bookinfo --sync-policy automated
 ```
 
 Check the status of your application
@@ -54,7 +54,7 @@ apps   Deployment      bookinfo   ratings-v1            Synced   Healthy        
 
 ```
 
-## Application Setup 
+## Application Setup
 
 If you already have kubernetes manifests created for deployment and service resource, You can choose to keep the same objects along with Argo `Rollout` object for facilitating the canary deployments.
 You can make necessary changes to `Rollout` object and TSB mesh configuration of Istio VirtualService/DestinationRule to achieve the desired result.
@@ -70,7 +70,7 @@ Since Argo Rollout require you to make some modifications on Istio `VirtualServi
 Create a `bookinfo-tsb-conf` app by importing the TSB configurations from [tsb-gitops-demo/argo/tsb/conf.yaml](https://github.com/tetrateio/tsb-gitops-demo/blob/main/argo/tsb/conf.yaml). You can also choose to keep it in the same repo. 
 
 ```bash{promptUser: "alice"}
-argocd app create bookinfo-tsb-conf --repo https://github.com/tetrateio/tsb-gitops-demo.git --path argo/tsb --dest-server https://kubernetes.default.svc --dest-namespace bookinfo
+argocd app create bookinfo-tse-conf --repo https://github.com/tetrateio/tse-gitops-demo.git --path argo/tse --dest-server https://kubernetes.default.svc --dest-namespace bookinfo --sync-policy automated
 ```
 
 Check the status of TSB resources
@@ -111,34 +111,38 @@ install.tetrate.io       IngressGateway   bookinfo      tsb-gateway-bookinfo    
 
 ## Verify application
 
-Run the below command to export LB IP of `tsb-gateway-bookinfo`
+Run the below command to export the load balancer's hostname of `tsb-gateway-bookinfo`
 
 ```bash{promptUser: "alice"}
-export GATEWAY_IP=$(kubectl -n bookinfo get service tsb-gateway-bookinfo -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+export GATEWAY_HOSTNAME=$(kubectl -n bookinfo get service tsb-gateway-bookinfo -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 ```
 
 Confirm that you can access bookinfo application. As you can see in the response, `review v1` service which we have currently deployed doesn't call `ratings` service.
 
 ```bash{promptUser: "alice"}
-curl -v "http://bookinfo.tetrate.com/api/v1/products/1/reviews" \
-    --resolve "bookinfo.tetrate.com:80:$GATEWAY_IP"
+curl -v -H "Host: bookinfo.tetrate.com" http://$GATEWAY_HOSTNAME/api/v1/products/1/reviews
 
-* Mark bundle as not supporting multiuse
+*   Trying 3.128.193.20:80...
+* Connected to afa5d6ee8bfa84601af7d081ab655e33-2123636928.us-east-2.elb.amazonaws.com (3.128.193.20) port 80 (#0)
+> GET /api/v1/products/1/reviews HTTP/1.1
+> Host: bookinfo.tetrate.com
+> User-Agent: curl/7.88.1
+> Accept: */*
+>
 < HTTP/1.1 200 OK
 < content-type: application/json
-< content-length: 361
+< content-length: 353
 < server: istio-envoy
-< date: Mon, 22 Aug 2022 06:36:52 GMT
-< x-envoy-upstream-service-time: 782
+< date: Tue, 20 Jun 2023 05:49:37 GMT
+< x-envoy-upstream-service-time: 35
 <
-* Connection #0 to host bookinfo.tetrate.com left intact
-{"id": "1", "podname": "reviews-rollout-56ff4b868c-74d8t", "clustername": "null", "reviews": [{"reviewer": "Reviewer1", "text": "An extremely entertaining play by Shakespeare. The slapstick humour is refreshing!"}, {"reviewer": "Reviewer2", "text": "Absolutely fun and entertaining. The play lacks thematic depth when compared to other plays by Shakespeare."}]}
+* Connection #0 to host afa5d6ee8bfa84601af7d081ab655e33-2123636928.us-east-2.elb.amazonaws.com left intact
+{"id": "1", "podname": "reviews-745997dbb6-llkmd", "clustername": "null", "reviews": [{"reviewer": "Reviewer1", "text": "An extremely entertaining play by Shakespeare. The slapstick humour is refreshing!"}, {"reviewer": "Reviewer2", "text": "Absolutely fun and entertaining. The play lacks thematic depth when compared to other plays by Shakespeare."}]}
 ```
 
 ## Setup ArgoRollout 
 
-
-Argo Rollout provides multiple options to migrate your existing kubernetes deployment object into Argo's `Rollout` object. You can either convert an existing k8s deployment object to `Rollout` or you can refer your existing k8s deployment from a `Rollout` object using `workloadRef`.
+Argo Rollout provides multiple options to migrate your existing Kubernetes deployment object into Argo's `Rollout` object. You can either convert an existing Kubernetes deployment object to `Rollout` or you can refer your existing Kubernetes deployment from a `Rollout` object using `workloadRef`.
 We will be following the latter approach in this example. 
 
 In this example we will be doing a canary deployment of `reviews` service to demonstrate `Rollout` object configurations and how it is facilitating the traffic shifting to both primary and canary deployment of `reviews` service.
@@ -214,7 +218,8 @@ spec:
 
 ## Configure Canary Analysis Template using SkyWalking
 
-[SkyWalking](https://skywalking.apache.org/), an observability component bundled in TSB, can serve as a metrics provider to support canary deployment analysis, enabling automatic promotion or rollback actions
+[SkyWalking](https://skywalking.apache.org/), an observability component bundled in TSB, can serve as a metrics provider to support canary deployment analysis, enabling automatic promotion or rollback actions.
+
 Please refer [Analysis & Progressive delivery in Argo Rollout](https://argoproj.github.io/argo-rollouts/features/analysis/) and how [SkyWalking](https://argoproj.github.io/argo-rollouts/analysis/skywalking/) can be used as a metrics provider for more details.
 
 * Create canary `AnalysisTemplate` using `skywalking` as the metrics provider to drive auto promotion/rollback based on the deployment analysis.
@@ -253,12 +258,12 @@ spec:
 
 ```
 
-## Create Rollout 
+## Create Rollout
 
 Run the below command to create a rollout app
 
 ```bash{promptUser: "alice"}
-argocd app create reviews-rollout --repo https://github.com/tetrateio/tsb-gitops-demo.git --path argo/rollout --dest-server https://kubernetes.default.svc --dest-namespace bookinfo --sync-policy automated --auto-prune
+argocd app create reviews-rollout --repo https://github.com/tetrateio/tse-gitops-demo.git --path argo/rollout --dest-server https://kubernetes.default.svc --dest-namespace bookinfo --sync-policy automated
 ```
 
 Check the status
@@ -266,17 +271,17 @@ Check the status
 ```bash{promptUser: "alice"}
 argocd app get reviews-rollout
 
-Name:               reviews-rollout
+Name:               argocd/reviews-rollout
 Project:            default
 Server:             https://kubernetes.default.svc
 Namespace:          bookinfo
-URL:                https://localhost:8080/applications/reviews-rollout
-Repo:               https://github.com/tetrateio/tsb-gitops-demo.git
+URL:                https://a6ac1dfecc7304b04bb4fb1a1188b7b2-1440792976.us-east-2.elb.amazonaws.com/applications/reviews-rollout
+Repo:               https://github.com/tetrateio/tse-gitops-demo.git
 Target:
 Path:               argo/rollout
 SyncWindow:         Sync Allowed
 Sync Policy:        Automated (Prune)
-Sync Status:        Synced to  (04f154e)
+Sync Status:        Synced to  (53acf56)
 Health Status:      Healthy
 
 GROUP        KIND              NAMESPACE  NAME             STATUS  HEALTH   HOOK  MESSAGE
@@ -289,7 +294,7 @@ argoproj.io  Rollout           bookinfo   reviews-rollout  Synced  Healthy      
 Update the `reviews` service deployment image to `v2` version. This will immediately trigger a canary deployment of `reviews` v2 and will modify the traffic percentage as 90/10.
 
 ```bash{promptUser: "alice"}
-kubectl argo rollouts set image reviews-rollout reviews=docker.io/istio/examples-bookinfo-reviews-v2:1.16.4 -n bookinfo
+kubectl argo rollouts set image reviews-rollout reviews=docker.io/istio/examples-bookinfo-reviews-v1:1.16.4 -n bookinfo
 ```
 
 ## Monitor Canary Deployment
@@ -336,7 +341,7 @@ NAME                                         KIND        STATUS     AGE    INFO
 Run the below command to send some requests to bookinfo application.
 
 ```bash{promptUser: "alice"}
-while true; do curl -m 5 -v "http://bookinfo.tetrate.com/api/v1/products/1/reviews" --resolve "bookinfo.tetrate.com:80:$GATEWAY_IP";  sleep 2 ; done ;
+while true; do curl -m 5 -H "Host: bookinfo.tetrate.com" http://$GATEWAY_HOSTNAME/api/v1/products/1/reviews;sleep 2; done;
 ```
 
 As you can see, some of the response will have the response from `ratings` service as `reviews-v2` calls `ratings` service.
